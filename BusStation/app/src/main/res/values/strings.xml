@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">BusStation</string>
+<!--    <string name="map_api_key">AIzaSyBVUoPBg-9fIjQiMTgwkHu52PPwjdfmR6M</string>-->
+    <string name="map_api_key">AIzaSyBEADdfs8ZHdOC7DnDs0liTZ154NpW-Hh0</string>
+    <string name="Open">NavBar</string>
+    <string name="Close">NavBar</string>
+    <string name="title_activity_home_main">HomeMain</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="menu_home">Home</string>
+    <string name="menu_gallery">Gallery</string>
+    <string name="menu_slideshow">Slideshow</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+</resources>
