@@ -1,0 +1,256 @@
+    $primary-logo-color:#1F2D88;
+    $app-primary-color:rgb(27, 58, 87);
+    $primary-logo-color:#1F2D88;
+    $light-blue-color:rgb(26, 115, 232);
+    $sub-logo-color:#EC1C25;
+    $appbar-color:rgb(57, 73, 171);
+    $sidebar-color:rgb(37, 42, 43);
+    $navlink-active: rgb(102, 157, 246);
+    $grey-100:#f5f5f5;
+    $grey-200:#eee;
+    $grey-300:#e0e0e0;
+    $grey-400:#bdbdbd;
+    $grey-500:#9e9e9e;
+    $sidebar-border:1px solid rgba($grey-500, .3);
+    $section-title-color:rgb(71, 98, 130);
+    .primary-logo-color {
+        color: $primary-logo-color !important;
+    }
+    
+    .grey-200-bg {
+        background-color: $grey-200 !important;
+    }
+    
+    .grey-300-bg {
+        background-color: $grey-300 !important;
+    }
+    
+    .light-grey-bg {
+        background-color: rgb(250, 250, 250) !important;
+    }
+    
+    .section-title-color {
+        color: $section-title-color;
+    }
+    
+    .light-blue-bgcolor {
+        background-color: $light-blue-color !important;
+    }
+    
+    .light-blue-color {
+        color: $light-blue-color !important;
+    }
+    
+    .sub-logo-color {
+        color: $sub-logo-color !important;
+    }
+    
+    .login-page {
+        background: linear-gradient(rgba(black, 0.1), rgba(black, 0.1)), url('./assets/backgroundbus.jpg') no-repeat center, ;
+        background-size: cover;
+        width: 100vw;
+        /* @media (max-width: 960px) {
+        background-image: linear-gradient(rgba(black, 0.1), rgba(black, 0.1)), url(../assets/anh_truong_mobile.jpg);
+        justify-content: center;
+    } */
+    }
+    
+    .login-form {
+        background-color: rgba(white, 0.9);
+        height: 100%;
+        min-height: 100vh;
+        display: flex;
+        padding: 0 15px;
+        flex-direction: column;
+        justify-content: center;
+        @media (min-width: 992px) {
+            padding: 10px 40px;
+        }
+        @media (min-width:768px) {
+            border-bottom-left-radius: 50px;
+            border-top-right-radius: 50px;
+            border-left: $primary-logo-color 10px solid;
+            border-right: $primary-logo-color 10px solid;
+        }
+    }
+    
+    .wrapper {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        color: $app-primary-color;
+        main {
+            background-color: rgb(244, 246, 248);
+            flex: 1;
+            display: flex;
+            padding: 15px 5px 30px 5px;
+            min-height: calc(100vh - 60px);
+        }
+        .MuiTableCell-head {
+            font-weight: 600;
+        }
+        .page-breadcrumb {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            a {
+                color: inherit;
+            }
+            li:last-child {
+                color: $app-primary-color;
+            }
+        }
+        .content {
+            @media (min-width: 992px) {
+                margin-left: 256px;
+            }
+        }
+        .appbar {
+            background-color: $appbar-color;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+            padding: 8px 10px;
+            position: sticky;
+            top: 0;
+            box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.49);
+            z-index: 1000;
+            #toggle-button {
+                @media (min-width: 992px) {
+                    display: none;
+                }
+            }
+            * {
+                color: inherit;
+            }
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            padding: 12px 0;
+            color: $section-title-color;
+        }
+        .feature-card {
+            font-size: 17px;
+            font-weight: 700;
+            color: inherit;
+            &.course-create {
+                background: linear-gradient(180deg, rgba(32, 114, 163, 1) 0%, rgba(98, 164, 207, 1) 100%);
+                .feature-card-action {
+                    background: rgb(98, 164, 207);
+                }
+            }
+            &.course-list {
+                background: linear-gradient(180deg, rgba(176, 129, 40, 1) 0%, rgba(226, 185, 127, 1) 100%);
+                .feature-card-action {
+                    background: rgb(226, 185, 127);
+                }
+            }
+        }
+        .feature-card-action {
+            height: 200px;
+            color: white;
+            text-align: center;
+        }
+        .feature-card-header {
+            color: white;
+            text-align: center;
+            background-color: transparent;
+        }
+    }
+    
+    .sidebar {
+        width: 256px;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        background-color: white;
+        color: rgb(84, 110, 122);
+        border-right: 1px solid rgba($grey-500, .5);
+        &.persist {
+            display: none;
+            position: fixed;
+            margin-top: 60px;
+            padding-top: 10px;
+            height: calc(100% - 60px);
+            @media (min-width: 992px) {
+                display: flex;
+            }
+            .sidebar-header {
+                display: none;
+            }
+        }
+        .sidebar-header {
+            height: 60px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding-right: 10px;
+        }
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        .sidebar-footer {
+            border-top: $sidebar-border;
+            text-align: center;
+            padding: 10px;
+        }
+        .sidebar-item {
+            height: 40px;
+            border-bottom: $sidebar-border;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            color: inherit;
+            font-size: 14px;
+            font-weight: 900;
+            &:hover {
+                background-color: rgba(white, .05);
+                text-decoration: none;
+            }
+            &.nested {
+                padding: 0 30px;
+            }
+            &.active {
+                color: $navlink-active;
+            }
+        }
+        .sidebar-list {
+            height: 60px;
+            border-bottom: $sidebar-border;
+            transition: background 250ms ease-in-out;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: inherit;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 900;
+            padding: 0 15px;
+            &:hover {
+                background-color: rgba(white, .05);
+            }
+        }
+    }
+    
+    .title {
+        font-size: large;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 100px;
+        padding: 50px;
+    }
+    
+    .nav-main {
+        text-decoration: none;
+        display: flex;
+        list-style: none;
+        .user-name {
+            font-weight: 500;
+            margin-right: 15px;
+        }
+    }
