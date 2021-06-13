@@ -53,7 +53,7 @@ const MainPage = () => {
   );
 };
 function App() {
-  const initialState = { user: null, posts: [] };
+  const initialState = { user: null, posts: [], bus: [], busstop: [] };
   const [state, dispatch] = useReducer(Reducer, initialState);
 
   // xac minh co dang dang nhap ko
@@ -61,7 +61,6 @@ function App() {
   const checkUserCurrent = useCallback(async () => {
     try {
       let accessToken = localStorage.getItem("accessToken");
-      console.log("aaa");
       const fetch = {
         method: "post",
         // url: "http://localhost:3002/api/users/get-infor",
@@ -72,17 +71,13 @@ function App() {
       };
 
       const res = await axios(fetch);
-      console.log(res);
       if (res.data) {
-        console.log("aaaa");
         const { username } = res.data;
         dispatch({ type: "CURRENT_USER", payload: { username } });
       }
     } catch (err) {
       try {
-        console.log("token het han refresh cai moi");
         let refreshToken = localStorage.getItem("refreshToken");
-        console.log(refreshToken);
         const fetch = {
           method: "post",
           url: "https://busapbe.herokuapp.com/api/auth/refresh",
@@ -93,7 +88,6 @@ function App() {
         };
 
         const res = await axios(fetch);
-        console.log(res);
         if (res.data) {
           localStorage.setItem("accessToken", res.data.accessToken);
           dispatch({ type: "CURRENT_USER", payload: { username: "loading" } });
@@ -106,7 +100,6 @@ function App() {
   useEffect(() => {
     checkUserCurrent();
   });
-  console.log(state.user);
   return (
     <Router>
       <AppContext.Provider value={{ state, dispatch }}>

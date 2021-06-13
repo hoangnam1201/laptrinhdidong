@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { Drawer, IconButton } from "@material-ui/core";
+import { Button, Drawer, IconButton } from "@material-ui/core";
 import { useRef, useState } from "react";
 import { AiFillSetting, AiOutlineMenu } from "react-icons/ai";
 import { Link } from "react-router-dom";
@@ -28,7 +28,7 @@ const Appbar = () => {
       >
         <AiOutlineMenu />
       </IconButton>
-      <Link to="/">
+      <Link to="/home">
         <img src={logobus} alt="logo" height="50px" className="mx-3" />
       </Link>
       <div ref={menuRef} className="position-relative">
@@ -44,7 +44,15 @@ const Appbar = () => {
               <li>
                 <span className="user-name">Hello, {user.username}</span>
               </li>
-              <li onClick={() => Logout()}>LogOut</li>
+              <li>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={() => Logout()}
+                >
+                  LogOut
+                </Button>
+              </li>
             </>
           ) : (
             <>

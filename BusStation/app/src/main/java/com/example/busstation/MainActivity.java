@@ -2,6 +2,7 @@ package com.example.busstation;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -20,15 +21,22 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.busstation.controllers.SharedPreferencesController;
+import com.example.busstation.models.AccessToken;
+import com.example.busstation.models.Token;
 import com.example.busstation.models.User;
 import com.example.busstation.services.RetrofitService;
 import com.example.busstation.services.UserService;
+
+import org.json.JSONObject;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+
+import static android.content.Context.MODE_PRIVATE;
+import static com.example.busstation.HomeNavigation.redirectActivity;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -40,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
     private SharedPreferences loginPreferences;
     private SharedPreferences.Editor loginPrefsEditor;
     private Boolean saveLogin;
+    static Context context;
 
     @Override
     public void onBackPressed() {
@@ -50,13 +59,15 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Animation animation = AnimationUtils.loadAnimation(this, R.anim.rotate_animation);
+        context = this;
+
+        Animation animation = AnimationUtils.loadAnimation(MainActivity.this, R.anim.rotate_animation);
         findViewById(R.id.imageView).startAnimation(animation);
 
 
         anhXa();
-        checkUserID();
 
+        checkLogged();
         //btnLogin.setOnClickListener(v -> onLogin());
         signup.setOnClickListener(v -> openSignUp());
         forgot.setOnClickListener(v -> openForgot());
@@ -70,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
             edtUsername.setText(loginPreferences.getString("username", ""));
             edtPassword.setText(loginPreferences.getString("password", ""));
             rememberme.setChecked(true);}
+
     }
     //Ghi nhớ TK
     public void onClick(View view) {
@@ -91,19 +103,40 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void checkUserID() {
-        if (SharedPreferencesController.getStringValueByKey(this, "userAuthId") != null) {
+    public void checkLogged() {
+
+        btnLogin.setVisibility(View.INVISIBLE);
+        if (SharedPreferencesController.getStringValueByKey(this, "accessToken") != null && SharedPreferencesController.getStringValueByKey(this, "refreshToken") != null) {
             findViewById(R.id.loadingLayout).setVisibility(View.VISIBLE);
-            RetrofitService.create(UserService.class).getUser(SharedPreferencesController.getStringValueByKey(this, "userAuthId")).enqueue(new Callback<User>() {
+            RetrofitService.create(UserService.class).getInfo("Token " + SharedPreferencesController.getStringValueByKey(this,"accessToken")).enqueue(new Callback<User>() {
                 @Override
                 public void onResponse(Call<User> call, Response<User> response) {
-                    if (response.body() != null) {
+                    if (response.isSuccessful()) {
                         Intent intent = new Intent(getApplicationContext(), HomeNavigation.class);
                         startActivity(intent);
                         return;
                     }
-                    btnLogin.setVisibility(View.INVISIBLE);
-                    findViewById(R.id.loadingLayout).setVisibility(View.GONE);
+                    else{
+                        RetrofitService.create(UserService.class).refreshToken(SharedPreferencesController.getStringValueByKey(context, "refreshToken")).enqueue(new Callback<AccessToken>() {
+                            @Override
+                            public void onResponse(Call<AccessToken> call, Response<AccessToken> response) {
+                                Log.d("kiemtra", "onResponse: " + "refresh" + response.code());
+                                if (response.isSuccessful() && response.body() != null) {
+                                    SharedPreferencesController.setStringValue(context, "accessToken", response.body().getAccessToken());
+                                    checkLogged();
+                                } else {
+                                    SharedPreferencesController.clear(context);
+                                    btnLogin.setVisibility(View.VISIBLE);
+                                    findViewById(R.id.loadingLayout).setVisibility(View.GONE);
+                                }
+                            }
+                            @Override
+                            public void onFailure(Call<AccessToken> call, Throwable t) {
+                                btnLogin.setVisibility(View.VISIBLE);
+                                findViewById(R.id.loadingLayout).setVisibility(View.GONE);
+                            }
+                        });
+                    }
                 }
 
                 @Override
@@ -137,26 +170,35 @@ public class MainActivity extends AppCompatActivity {
     public void onLogin() {
         progressBar.setVisibility(View.VISIBLE);
         tvError.setText("");
-        RetrofitService.create(UserService.class).login(edtUsername.getText().toString(), edtPassword.getText().toString()).enqueue(new Callback<User>() {
+        RetrofitService.create(UserService.class).login(edtUsername.getText().toString(), edtPassword.getText().toString()).enqueue(new Callback<Token>() {
             @Override
-            public void onResponse(Call<User> call, Response<User> response) {
-                if (response.body() == null) {
+            public void onResponse(Call<Token> call, Response<Token> response) {
+                if (!response.isSuccessful()) {
                     progressBar.setVisibility(View.INVISIBLE);
-                    tvError.setText("invalid username or password");
+                    try {
+                        JSONObject jObjError = new JSONObject(response.errorBody().string());
+                        tvError.setText(jObjError.getString("err"));
+                    }catch(Exception e){
+                        tvError.setText(e.getMessage());
+                    }
                     return;
                 }
+                Token token = response.body();
+                SharedPreferencesController.setStringValue(getApplicationContext(), "accessToken", token.getAccessToken());
+                SharedPreferencesController.setStringValue(getApplicationContext(), "refreshToken", token.getRefreshToken());
 
                 Intent intent = new Intent(getApplicationContext(), HomeNavigation.class);
+                finish();
                 startActivity(intent);
 
-                User user = response.body();
-                SharedPreferencesController.setStringValue(getApplicationContext(), "userAuthId", user.get_id());
             }
 
             @Override
-            public void onFailure(Call<User> call, Throwable t) {
-                tvError.setText("Error! An error occurred. Please try again later");
+            public void onFailure(Call<Token> call, Throwable t) {
+                tvError.setText("Error! An error occurred. Please try again later" + t.getMessage());
                 progressBar.setVisibility(View.INVISIBLE);
+                btnLogin.setVisibility(View.VISIBLE);
+                findViewById(R.id.loadingLayout).setVisibility(View.GONE);
             }
         });
 

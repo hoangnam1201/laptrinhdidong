@@ -1,6 +1,8 @@
 package com.example.busstation.services;
 
-import com.example.busstation.models.Buses_Favorite;
+import com.example.busstation.models.AccessToken;
+import com.example.busstation.models.Buses;
+import com.example.busstation.models.Token;
 import com.example.busstation.models.User;
 
 import java.util.List;
@@ -8,21 +10,15 @@ import java.util.List;
 import retrofit2.Call;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
-import retrofit2.http.GET;
+import retrofit2.http.Header;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
-import retrofit2.http.Path;
 
 public interface UserService {
-    @GET("user-username/{username}")
-    Call<Boolean> checkExistUsername(@Path("username") String username);
-
-    @GET("user-email/{email}")
-    Call<Boolean> checkExistEmail(@Path("email") String email);
 
     @FormUrlEncoded
-    @POST("users")
-    Call<List<User>> createUser(
+    @POST("users/add")
+    Call<User> addUser(
             @Field("fullname") String fullname,
             @Field("username") String username,
             @Field("email") String email,
@@ -30,50 +26,46 @@ public interface UserService {
     );
 
     @FormUrlEncoded
-    @POST("user-login")
-    Call<User> login(
+    @POST("auth/login")
+    Call<Token> login(
             @Field("username") String username,
             @Field("password") String password
     );
 
-    @FormUrlEncoded
-    @POST("user")
-    Call<User> getUser(
-            @Field("id") String id
-    );
+
+    @POST("users/get-infor")
+    Call<User> getInfo(@Header("Authorization") String authorization);
 
     @FormUrlEncoded
-    @PUT("user/{id}")
+    @POST("auth/refresh")
+    Call<AccessToken> refreshToken(@Field("refreshToken") String refreshToken);
+
+    @FormUrlEncoded
+    @PUT("users/update-infomation")
     Call<User> ChangeInfo(
-      @Path("id") String id,
-      @Field("email") String email,
-      @Field("fullname") String fullname,
-      @Field("username") String username
+            @Header("Authorization") String authorization,
+            @Field("email") String email,
+            @Field("fullname") String fullname,
+            @Field("username") String username
     );
 
     @FormUrlEncoded
-    @POST("user-checkpassword")
-    Call<Boolean> CheckPassword(
-           @Field("id") String id,
-           @Field("password") String password
-    );
-
-    @FormUrlEncoded
-    @PUT("/api/user-password/{id}")
+    @PUT("users/update-password")
     Call<User> ChangePassword(
-            @Path("id") String id,
+            @Header("Authorization") String authorization,
+            @Field("oldPassword") String oldPassword,
             @Field("password") String password
     );
 
     @FormUrlEncoded
-    @PUT("users-addFavoriteBuses/{id}")
-    Call<List<Buses_Favorite>> addFavorite(@Path("id") String id, @Field("idBuses") String idBuses);
+    @PUT("users/add-favorite-bus")
+    Call<List<Buses>> AddFavorite(@Header("Authorization") String authorization, @Field("idBuses") String idBuses);
 
 
     @FormUrlEncoded
-    @PUT("users-deleteFavoriteBuses/{id}")
-    Call<List<Buses_Favorite>> DeleteFavorite(@Path("id") String id, @Field("idBuses") String idBuses);
+    @PUT("users/delete-favorite-bus")
+    Call<List<Buses>> DeleteFavorite(@Header("Authorization") String authorization, @Field("idBuses") String idBuses);
 
-    @POST("user-favoriteBuses/{id}")
-    Call<List<Buses_Favorite>> GetFavorite(@Path("id") String id);
+    @POST("users/get-favorite-bus")
+    Call<List<Buses>> GetFavorite(@Header("Authorization") String authorization);
 }

@@ -24,6 +24,8 @@ import com.example.busstation.models.User;
 import com.example.busstation.services.RetrofitService;
 import com.example.busstation.services.UserService;
 
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -88,60 +90,28 @@ public class SignUpActivity extends AppCompatActivity {
     }
 
     public void createUser() {
-        RetrofitService.create(UserService.class).checkExistUsername(edtUsername.getText().toString().trim()).enqueue(new Callback<Boolean>() {
+        RetrofitService.create(UserService.class).addUser(edtFullName.getText().toString(), edtUsername.getText().toString(),edtEmail.getText().toString(), edtPassword.getText().toString()).enqueue(new Callback<User>() {
             @Override
-            public void onResponse(Call<Boolean> call, Response<Boolean> response) {
-                if (response.body()) {
-                    progressBar.setVisibility(View.INVISIBLE);
-                    tvError.setText("Username already exist");
-                    btnApply.setEnabled(true);
-                    return;
+            public void onResponse(Call<User> call, Response<User> response) {
+                progressBar.setVisibility(View.INVISIBLE);
+                if (response.isSuccessful()) {
+                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                startActivity(intent);
+                } else {
+                    try {
+                        JSONObject jObjError = new JSONObject(response.errorBody().string());
+                        tvError.setText(jObjError.getString("err"));
+
+                    } catch (Exception e) {
+                        tvError.setText(e.getMessage());
+                    }
                 }
-                RetrofitService.create(UserService.class).checkExistEmail(edtEmail.getText().toString().trim()).enqueue(new Callback<Boolean>() {
-                    @Override
-                    public void onResponse(Call<Boolean> call, Response<Boolean> response) {
-                        if (response.body()) {
-                            progressBar.setVisibility(View.INVISIBLE);
-                            btnApply.setEnabled(true);
-                            tvError.setText("Email already exist");
-                            return;
-                        }
-                        RetrofitService.create(UserService.class).createUser(
-                                edtFullName.getText().toString().trim(),
-                                edtUsername.getText().toString().trim(),
-                                edtEmail.getText().toString().trim(),
-                                edtPassword.getText().toString().trim()
-                        ).enqueue(new Callback<List<User>>() {
-                            @Override
-                            public void onResponse(Call<List<User>> call, Response<List<User>> response) {
-
-                                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                                startActivity(intent);
-                            }
-
-                            @Override
-                            public void onFailure(Call<List<User>> call, Throwable t) {
-                                progressBar.setVisibility(View.INVISIBLE);
-                                btnApply.setEnabled(true);
-                                tvError.setText("Error! An error occurred. Please try again later");
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onFailure(Call<Boolean> call, Throwable t) {
-                        progressBar.setVisibility(View.INVISIBLE);
-                        btnApply.setEnabled(true);
-                        tvError.setText("Error! An error occurred. Please try again later");
-                    }
-                });
             }
 
             @Override
-            public void onFailure(Call<Boolean> call, Throwable t) {
+            public void onFailure(Call<User> call, Throwable t) {
                 progressBar.setVisibility(View.INVISIBLE);
-                btnApply.setEnabled(true);
-                tvError.setText("Error! An error occurred. Please try again later");
+                tvError.setText(t.toString());
             }
         });
     }

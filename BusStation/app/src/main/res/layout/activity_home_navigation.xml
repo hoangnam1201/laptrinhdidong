@@ -64,8 +64,9 @@
                 android:layout_height="wrap_content"
                 android:background="@color/white"
                 android:padding="10dp"
-                android:layout_marginTop="500sp"
-                android:layout_marginLeft="10dp"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentBottom="true"
+                android:id="@+id/layoutSearchRoute"
                 >
                 <ImageButton
                     android:id="@+id/btnSearchRoute"
@@ -85,6 +86,13 @@
                     android:textSize="20sp"
                     android:textStyle="bold"/>
             </RelativeLayout>
+            <Button
+                android:layout_alignParentBottom="true"
+                android:id="@+id/btnCurrentLocation"
+                android:text="My location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true" />
 
         </RelativeLayout>
 

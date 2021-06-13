@@ -34,6 +34,6 @@
         android:layout_toRightOf="@+id/textViewMaSo"
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
-        android:layout_width="wrap_content"
+        android:layout_width="30dp"
         android:layout_height="30dp"/>
 </RelativeLayout>

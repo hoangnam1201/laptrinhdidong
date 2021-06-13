@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.example.busstation.R;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.PolylineOptions;
 
@@ -58,9 +59,11 @@ public class PointsParser extends AsyncTask<String, Integer, List<List<HashMap<S
         ArrayList<LatLng> points;
         PolylineOptions lineOptions = null;
         // Traversing through all the routes
+        points = new ArrayList<>();
+        lineOptions = new PolylineOptions();
         for (int i = 0; i < result.size(); i++) {
-            points = new ArrayList<>();
-            lineOptions = new PolylineOptions();
+//            points = new ArrayList<>();
+//            lineOptions = new PolylineOptions();
             // Fetching i-th route
             List<HashMap<String, String>> path = result.get(i);
             // Fetching all the points in i-th route
@@ -77,15 +80,16 @@ public class PointsParser extends AsyncTask<String, Integer, List<List<HashMap<S
                 lineOptions.width(10);
                 lineOptions.color(Color.MAGENTA);
             } else {
-                lineOptions.width(20);
-                lineOptions.color(Color.BLUE);
+                lineOptions.width(10);
+                lineOptions.color(R.color.black);
             }
             Log.d("mylog", "onPostExecute lineoptions decoded");
+
         }
 
         // Drawing polyline in the Google Map for the i-th route
         if (lineOptions != null) {
-            //mMap.addPolyline(lineOptions);
+            Log.d("kiemtra", "onPostExecute: " + points.size());
             taskCallback.onTaskDone(lineOptions);
 
         } else {

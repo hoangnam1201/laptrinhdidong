@@ -17,8 +17,6 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
@@ -26,16 +24,17 @@ import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.busstation.controllers.MapController;
 import com.example.busstation.controllers.SharedPreferencesController;
+import com.example.busstation.models.AccessToken;
 import com.example.busstation.models.BusStop;
-import com.example.busstation.models.Buses;
-import com.example.busstation.models.Busstop_Detail;
+import com.example.busstation.models.BusesDetail;
+import com.example.busstation.models.BusstopDetail;
 import com.example.busstation.models.User;
+import com.example.busstation.models.Route;
 import com.example.busstation.services.BusStopService;
 import com.example.busstation.services.BusesService;
 import com.example.busstation.services.GoogleLocationService;
@@ -56,9 +55,10 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -71,8 +71,6 @@ public class HomeNavigation extends AppCompatActivity implements OnMapReadyCallb
     GoogleMap map;
     Location myLocation = null;
     Location destinationLocation = null;
-    protected LatLng start = null;
-    protected LatLng end = null;
     private final static int LOCATION_REQUEST_CODE = 23;
     boolean locationPermission = false;
 
@@ -85,10 +83,10 @@ public class HomeNavigation extends AppCompatActivity implements OnMapReadyCallb
     ArrayAdapter<String> searchAdapter;
     AutoCompleteTextView searchView;
 
-    //test
-    Polyline currentPolyline;
+    // direction
     LatLng place1;
     LatLng place2;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -103,7 +101,7 @@ public class HomeNavigation extends AppCompatActivity implements OnMapReadyCallb
         info(this.findViewById(R.id.tvNameUser), this.findViewById(R.id.tvEmail));
         requestPermision();
         //test direction api
-        place1 = new LatLng(10.77350707042723, 106.70641602692451);
+        place1 = new LatLng(10.850858365517317, 106.77197594527688);
         place2 = new LatLng(10.947964488200222, 106.82867741206697);
         //google map
         MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.myMap);
@@ -114,91 +112,145 @@ public class HomeNavigation extends AppCompatActivity implements OnMapReadyCallb
 
         imgSearch.setOnClickListener(v -> {
             String str = searchView.getText().toString();
-            Log.d("kiemtra", "onCreate: " +str);
-            RetrofitService.create(BusStopService.class).searchBusStop(str).enqueue(new Callback<Busstop_Detail>() {
-                @Override
-                public void onResponse(Call<Busstop_Detail> call, Response<Busstop_Detail> response) {
-                    if (response.body() == null) {
+            onSearchBusStop(str);
+        });
+        findViewById(R.id.btnCurrentLocation).setOnClickListener(v ->{
+            getMyLocation();
+        });
+    }
+
+    public void onSearchBusStop(String str) {
+        RetrofitService.create(BusStopService.class).searchBusStop(str, "Token " + SharedPreferencesController.getStringValueByKey(context, "accessToken")).enqueue(new Callback<BusStop>() {
+            @Override
+            public void onResponse(Call<BusStop> call, Response<BusStop> response) {
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
+                        SharedPreferencesController.setStringValue(getApplicationContext(), "modeFollow", "busstop");
+                        SharedPreferencesController.setStringValue(getApplicationContext(), "followIdItem", response.body().get_id());
+                        UpLoadMarker();
+                    } else {
                         Toast.makeText(getApplicationContext(), "not found", Toast.LENGTH_SHORT).show();
-                        Log.d("kiemtra", "be: " + "null");
-                        return;
                     }
-                    Log.d("kiemtra", "onResponse: " + response.body().get_id());
-                    SharedPreferencesController.setStringValue(getApplicationContext(), "modeFollow", "busstop");
-                    SharedPreferencesController.setStringValue(getApplicationContext(), "followIdItem", response.body().get_id());
-                    UpLoadMarker();
+                } else {
+                    RetrofitService.create(UserService.class).refreshToken(SharedPreferencesController.getStringValueByKey(context, "refreshToken")).enqueue(new Callback<AccessToken>() {
+                        @Override
+                        public void onResponse(Call<AccessToken> call, Response<AccessToken> response) {
+                            if (response.isSuccessful() && response.body() != null) {
+                                SharedPreferencesController.setStringValue(context, "accessToken", response.body().getAccessToken());
+                                onSearchBusStop(str);
+                            } else {
+                                SharedPreferencesController.clear(context);
+                                redirectActivity((Activity) context, MainActivity.class);
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<AccessToken> call, Throwable t) {
+                            Log.d("kiemtra", "search: " + t.getMessage());
+                        }
+                    });
                 }
 
-                @Override
-                public void onFailure(Call<Busstop_Detail> call, Throwable t) {
+            }
 
-                }
-            });
+            @Override
+            public void onFailure(Call<BusStop> call, Throwable t) {
+
+                Log.d("kiemtra", "search: " + t.getMessage());
+            }
         });
     }
 
     //google map direction api
     @Override
-    public void onTaskDone(Object... values){
-
-        map.clear();
+    public void onTaskDone(Object... values) {
         map.addMarker(new MarkerOptions()
                 .position(place1)
-                .title("Bến xe Bạch Đằng") );
+                .title(SharedPreferencesController.getStringValueByKey(getApplicationContext(), "origin")));
         map.addMarker(new MarkerOptions()
                 .position(place2)
-                .title("Trường Đại Họ Sư Phạm Kỹ Thuật") );
-        currentPolyline = map.addPolyline((PolylineOptions) values[0]);
-        currentPolyline.setColor(R.color.black);
+                .title(SharedPreferencesController.getStringValueByKey(getApplicationContext(), "dest")));
+        map.addPolyline((PolylineOptions) values[0]);
     }
-    public String getUrl(LatLng origin, LatLng dest, String directionMode){
+
+    public String getUrl(LatLng origin, LatLng dest, String directionMode) {
         // origin of router
         String str_origin = "origin=" + origin.latitude + "," + origin.longitude;
         // dest of router
-        String str_dest = "destination=" + dest.latitude +"," +dest.longitude;
+        String str_dest = "destination=" + dest.latitude + "," + dest.longitude;
         // mode
-        String mode = "mode="+ directionMode;
+        String mode = "mode=" + directionMode;
 
-        String parameter = str_origin +"&"+ str_dest +"&"+ mode;
+        String parameter = str_origin + "&" + str_dest + "&" + mode;
 
         String output = "json";
 
-        String url = "https://maps.googleapis.com/maps/api/directions/"+ output + "?" + parameter + "&key=" + getString(R.string.map_api_key);
+        String url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameter + "&key=" + getString(R.string.map_api_key);
         return url;
     }
 
     public void uploadAutoComplete() {
-        RetrofitService.create(BusStopService.class).getName(searchView.getText().toString()).enqueue(new Callback<List<String>>() {
+        RetrofitService.create(BusStopService.class).getAllName("Token " + SharedPreferencesController.getStringValueByKey(context, "accessToken")).enqueue(new Callback<List<String>>() {
             @Override
             public void onResponse(Call<List<String>> call, Response<List<String>> response) {
-                if (response.body() == null || response.body().size() == 0) {
-                    autocompleteStrings.clear();
-                    autocompleteStrings.add("err");
-                    searchAdapter.notifyDataSetChanged();
+                if (response.isSuccessful()) {
+                    autocompleteStrings = response.body();
+                    searchAdapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, autocompleteStrings);
+                    searchView.setAdapter(searchAdapter);
                     return;
                 }
-                autocompleteStrings = response.body();
-                searchAdapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, autocompleteStrings);
-                searchView.setAdapter(searchAdapter);
+                RetrofitService.create(UserService.class).refreshToken(SharedPreferencesController.getStringValueByKey(context, "refreshToken")).enqueue(new Callback<AccessToken>() {
+                    @Override
+                    public void onResponse(Call<AccessToken> call, Response<AccessToken> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            SharedPreferencesController.setStringValue(context, "accessToken", response.body().getAccessToken());
+                            uploadAutoComplete();
+                        } else {
+                            SharedPreferencesController.clear(context);
+                            redirectActivity((Activity) context, MainActivity.class);
+                        }
+                    }
 
+                    @Override
+                    public void onFailure(Call<AccessToken> call, Throwable t) {
+
+                    }
+                });
             }
 
             @Override
             public void onFailure(Call<List<String>> call, Throwable t) {
-
             }
         });
     }
 
     public static void info(TextView nameUser, TextView emailUser) {
-        RetrofitService.create(UserService.class).getUser(SharedPreferencesController.getStringValueByKey(context, "userAuthId")).enqueue(new Callback<User>() {
+        RetrofitService.create(UserService.class).getInfo("Token " + SharedPreferencesController.getStringValueByKey(context, "accessToken")).enqueue(new Callback<User>() {
             @Override
             public void onResponse(Call<User> call, Response<User> response) {
-                if (response.body() == null) {
+                if (response.isSuccessful() && response.body() != null) {
+                    nameUser.setText(response.body().getFullname());
+                    emailUser.setText(response.body().getEmail());
                     return;
+                } else {
+                    RetrofitService.create(UserService.class).refreshToken(SharedPreferencesController.getStringValueByKey(context, "refreshToken")).enqueue(new Callback<AccessToken>() {
+                        @Override
+                        public void onResponse(Call<AccessToken> call, Response<AccessToken> response) {
+                            if (response.isSuccessful() && response.body() != null) {
+                                SharedPreferencesController.setStringValue(context, "accessToken", response.body().getAccessToken());
+                                info(nameUser, emailUser);
+                            } else {
+                                SharedPreferencesController.clear(context);
+                                redirectActivity((Activity) context, MainActivity.class);
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<AccessToken> call, Throwable t) {
+
+                        }
+                    });
                 }
-                nameUser.setText(response.body().getFullname());
-                emailUser.setText(response.body().getEmail());
             }
 
             @Override
@@ -221,7 +273,9 @@ public class HomeNavigation extends AppCompatActivity implements OnMapReadyCallb
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                           int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case LOCATION_REQUEST_CODE: {
                 if (grantResults.length > 0
@@ -253,7 +307,6 @@ public class HomeNavigation extends AppCompatActivity implements OnMapReadyCallb
         }
         map.setMyLocationEnabled(true);
         map.setOnMyLocationChangeListener(location -> {
-
             myLocation = location;
             LatLng ltlng = new LatLng(location.getLatitude(), location.getLongitude());
             CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(
@@ -270,45 +323,65 @@ public class HomeNavigation extends AppCompatActivity implements OnMapReadyCallb
 
         }
         map = googleMap;
-        LatLng ute = new LatLng(10.850811354434544, 106.77201747036543);
         UpLoadMarker();
-        if (!SharedPreferencesController.getBooleanValueByKey(this, "myPosition")) return;
-        getMyLocation();
     }
 
-    private void UpLoadMarker() {
-        String mode = SharedPreferencesController.getStringValueByKey(this, "modeFollow");
-        String idSearch = SharedPreferencesController.getStringValueByKey(this, "followIdItem");
-        Log.d("kiemtra: ", mode + "");
-        if (mode == null) {
-            RetrofitService.create(BusStopService.class).getAllBusStops().enqueue(new Callback<List<BusStop>>() {
-                @Override
-                public void onResponse(Call<List<BusStop>> call, Response<List<BusStop>> response) {
+    private void uploadAll() {
+        RetrofitService.create(BusStopService.class).getAll("Token " + SharedPreferencesController.getStringValueByKey(context, "accessToken")).enqueue(new Callback<List<BusStop>>() {
+            @Override
+            public void onResponse(Call<List<BusStop>> call, Response<List<BusStop>> response) {
+                if (response.isSuccessful() && response.body().size() > 0) {
                     map.clear();
                     List<BusStop> busStopList = response.body();
                     for (BusStop busStop : busStopList) {
                         if (!busStop.getName().equals("point"))
                             MapController.AddMarker(getApplicationContext(), map, busStop.getName(), busStop.getLocationName(), new LatLng(busStop.getLatitude(), busStop.getLongitude()));
                     }
-//                findViewById(R.id.loadingLayout).setVisibility(View.GONE);
+                    return;
                 }
+                if (response.code() == 401) {
+                    RetrofitService.create(UserService.class).refreshToken(SharedPreferencesController.getStringValueByKey(context, "refreshToken")).enqueue(new Callback<AccessToken>() {
+                        @Override
+                        public void onResponse(Call<AccessToken> call, Response<AccessToken> response) {
+                            if (response.isSuccessful() && response.body() != null) {
+                                SharedPreferencesController.setStringValue(context, "accessToken", response.body().getAccessToken());
+                                uploadAll();
+                            } else {
+                                SharedPreferencesController.clear(context);
+                                redirectActivity((Activity) context, MainActivity.class);
+                            }
+                        }
 
-                @Override
-                public void onFailure(Call<List<BusStop>> call, Throwable t) {
-
+                        @Override
+                        public void onFailure(Call<AccessToken> call, Throwable t) {
+                            Log.d("kiemtra", "search: " + t.getMessage());
+                        }
+                    });
+                    return;
                 }
-            });
-            return;
-        }
+                try {
+                    JSONObject jObjError = new JSONObject(response.errorBody().string());
+                    Toast.makeText(context, jObjError.getString("err"), Toast.LENGTH_SHORT).show();
+                } catch (Exception e) {
+                    Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            }
 
-        if (mode.equals("buses")) {
-            RetrofitService.create(BusesService.class).GetByID(idSearch).enqueue(new Callback<Buses>() {
-                @Override
-                public void onResponse(Call<Buses> call, Response<Buses> response) {
+            @Override
+            public void onFailure(Call<List<BusStop>> call, Throwable t) {
+
+            }
+        });
+    }
+
+    private void uploadBuses(String busesId) {
+        RetrofitService.create(BusesService.class).GetByID(busesId,"Token " + SharedPreferencesController.getStringValueByKey(context, "accessToken")).enqueue(new Callback<BusesDetail>() {
+            @Override
+            public void onResponse(Call<BusesDetail> call, Response<BusesDetail> response) {
+                if (response.isSuccessful() && response.body() != null) {
                     List<BusStop> busStops = response.body().getBusstops();
-                    if(busStops.size() == 0) return;
+                    if (busStops.size() == 0) return;
                     map.clear();
-
                     List<LatLng> points = new ArrayList<>();
                     for (int i = 0; i < busStops.size(); i++) {
                         points.add(new LatLng(busStops.get(i).getLatitude(), busStops.get(i).getLongitude()));
@@ -319,55 +392,162 @@ public class HomeNavigation extends AppCompatActivity implements OnMapReadyCallb
                         if (!busStop.getName().equals("point"))
                             MapController.AddMarker(getApplicationContext(), map, busStop.getName(), busStop.getLocationName(), new LatLng(busStop.getLatitude(), busStop.getLongitude()));
                     }
+                    return;
                 }
+                if (response.code() == 401) {
+                    RetrofitService.create(UserService.class).refreshToken(SharedPreferencesController.getStringValueByKey(context, "refreshToken")).enqueue(new Callback<AccessToken>() {
+                        @Override
+                        public void onResponse(Call<AccessToken> call, Response<AccessToken> response) {
+                            if (response.isSuccessful() && response.body() != null) {
+                                SharedPreferencesController.setStringValue(context, "accessToken", response.body().getAccessToken());
+                                uploadBuses(busesId);
+                            } else {
+                                SharedPreferencesController.clear(context);
+                                redirectActivity((Activity) context, MainActivity.class);
+                            }
+                        }
 
-                @Override
-                public void onFailure(Call<Buses> call, Throwable t) {
-                    Log.d("kiemtra", "onFailure: " + t.getMessage());
+                        @Override
+                        public void onFailure(Call<AccessToken> call, Throwable t) {
+                            Log.d("kiemtra", "search: " + t.getMessage());
+                        }
+                    });
+                    return;
                 }
-            });
-            return;
-        }
-        if(mode.equals("busstop")){
-            RetrofitService.create(BusStopService.class).getByID(idSearch).enqueue(new Callback<Busstop_Detail>() {
-                @Override
-                public void onResponse(Call<Busstop_Detail> call, Response<Busstop_Detail> response) {
+            }
+
+            @Override
+            public void onFailure(Call<BusesDetail> call, Throwable t) {
+                Log.d("kiemtra", "onFailure: " + t.getMessage());
+            }
+        });
+    }
+
+    private void uploadBusStop(String idSearch){
+        RetrofitService.create(BusStopService.class).getByID(idSearch, "Token " + SharedPreferencesController.getStringValueByKey(context, "accessToken")).enqueue(new Callback<BusstopDetail>() {
+            @Override
+            public void onResponse(Call<BusstopDetail> call, Response<BusstopDetail> response) {
+                if (response.isSuccessful()) {
                     map.clear();
-                    Busstop_Detail busstop = response.body();
+                    BusstopDetail busstop = response.body();
                     MapController.CameraUpdate(map, new LatLng(busstop.getLatitude(), busstop.getLongitude()));
-                    MapController.AddMarker(getApplicationContext(), map, busstop.getName(),busstop.getLocationName(), new LatLng(busstop.getLatitude(), busstop.getLongitude()));
-
+                    MapController.AddMarker(getApplicationContext(), map, busstop.getName(), busstop.getLocationName(), new LatLng(busstop.getLatitude(), busstop.getLongitude()));
+                    return;
                 }
+                RetrofitService.create(UserService.class).refreshToken(SharedPreferencesController.getStringValueByKey(context, "refreshToken")).enqueue(new Callback<AccessToken>() {
+                    @Override
+                    public void onResponse(Call<AccessToken> call, Response<AccessToken> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            SharedPreferencesController.setStringValue(context, "accessToken", response.body().getAccessToken());
+                            uploadBusStop(idSearch);
+                        } else {
+                            SharedPreferencesController.clear(context);
+                            redirectActivity((Activity) context, MainActivity.class);
+                        }
+                    }
 
-                @Override
-                public void onFailure(Call<Busstop_Detail> call, Throwable t) {
-                }
-            });
-        }
-        if(mode.equals("router")){
-            MapController.CameraUpdate(map,place1);
-            GoogleLocationService.getAddress(SharedPreferencesController.getStringValueByKey(getApplicationContext(),"origin"),getApplicationContext(),new GeoHandler());
-            String url = getUrl(place1,place2,"driving");
-            new FetchURL(this).execute(url, "driving");
-            RetrofitService.create(BusStopService.class).getAllBusStops().enqueue(new Callback<List<BusStop>>() {
-                @Override
-                public void onResponse(Call<List<BusStop>> call, Response<List<BusStop>> response) {
+                    @Override
+                    public void onFailure(Call<AccessToken> call, Throwable t) {
+                        Log.d("kiemtra", "search: " + t.getMessage());
+                    }
+                });
+                return;
+            }
 
+            @Override
+            public void onFailure(Call<BusstopDetail> call, Throwable t) {
+            }
+        });
+    }
+
+    private void uploadBusStopAround(){
+        RetrofitService.create(BusStopService.class).getBusStopAround(new Route(place1,place2), "Token " + SharedPreferencesController.getStringValueByKey(context, "accessToken")).enqueue(new Callback<List<BusStop>>() {
+            @Override
+            public void onResponse(Call<List<BusStop>> call, Response<List<BusStop>> response) {
+                Log.d("kiemtra", "around: " + response.code());
+                Log.d("kiemtra", "around: ");
+                if (response.isSuccessful() && response.body().size() > 0) {
                     List<BusStop> busStopList = response.body();
                     for (BusStop busStop : busStopList) {
                         if (!busStop.getName().equals("point"))
                             MapController.AddMarker(getApplicationContext(), map, busStop.getName(), busStop.getLocationName(), new LatLng(busStop.getLatitude(), busStop.getLongitude()));
                     }
+                    return;
+                }
+                if (response.code() == 401) {
+                    RetrofitService.create(UserService.class).refreshToken(SharedPreferencesController.getStringValueByKey(context, "refreshToken")).enqueue(new Callback<AccessToken>() {
+                        @Override
+                        public void onResponse(Call<AccessToken> call, Response<AccessToken> response) {
+                            if (response.isSuccessful() && response.body() != null) {
+                                SharedPreferencesController.setStringValue(context, "accessToken", response.body().getAccessToken());
+                                uploadAll();
+                            } else {
+                                SharedPreferencesController.clear(context);
+                                redirectActivity((Activity) context, MainActivity.class);
+                            }
+                        }
 
-//                findViewById(R.id.loadingLayout).setVisibility(View.GONE);
+                        @Override
+                        public void onFailure(Call<AccessToken> call, Throwable t) {
+                            Log.d("kiemtra", "search: " + t.getMessage());
+                        }
+                    });
+                    return;
+                }
+                try {
+                    JSONObject jObjError = new JSONObject(response.errorBody().string());
+                    Toast.makeText(context, jObjError.getString("err"), Toast.LENGTH_SHORT).show();
+                    Log.d("kiemtra", "err: " + jObjError.getString("err"));
+                } catch (Exception e) {
+                    Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Log.d("kiemtra", "err: " + e.getMessage());
                 }
 
-                @Override
-                public void onFailure(Call<List<BusStop>> call, Throwable t) {
+            }
 
-                }
-            });
+            @Override
+            public void onFailure(Call<List<BusStop>> call, Throwable t) {
+                Log.d("kiemtra", "search: " + t.getMessage());
+            }
+        });
+    }
 
+    private void UpLoadMarker() {
+        String mode = SharedPreferencesController.getStringValueByKey(this, "modeFollow");
+        String idSearch = SharedPreferencesController.getStringValueByKey(this, "followIdItem");
+        Log.d("kiemtra: ", mode + "");
+        if (mode == null) {
+            uploadAll();
+            return;
+        }
+
+        if (mode.equals("buses")) {
+            uploadBuses(idSearch);
+            return;
+        }
+        if (mode.equals("busstop")) {
+            uploadBusStop(idSearch);
+            return;
+        }
+        if (mode.equals("router")) {
+            String origin = SharedPreferencesController.getStringValueByKey(getApplicationContext(), "origin");
+//            String origin = "Bến tàu khách Thành phố, Bến Nghé, Quận 1, Thành phố Hồ Chí Minh";
+
+            String dest = SharedPreferencesController.getStringValueByKey(getApplicationContext(), "dest");
+//            String dest = "Đan viện Cát Minh, Đường Tôn Đức Thắng, Bến Nghé, Quận 1, Thành phố Hồ Chí Minh";
+            if (origin == null || dest == null) {
+                Toast.makeText(getApplicationContext(), "not found origin or dest", Toast.LENGTH_SHORT).show();
+                SharedPreferencesController.setStringValue(getApplicationContext(), "modeFollow", null);
+                SharedPreferencesController.removeKey(getApplicationContext(), "modeFollow");
+                SharedPreferencesController.removeKey(getApplicationContext(), "origin");
+                SharedPreferencesController.removeKey(getApplicationContext(), "dest");
+            }
+            place1 = GoogleLocationService.getLocationFromAddress(getApplicationContext(), origin);
+            place2 = GoogleLocationService.getLocationFromAddress(getApplicationContext(), dest);
+            uploadBusStopAround();
+            MapController.CameraUpdate(map, place1);
+            String url = getUrl(place1, place2, "driving");
+            new FetchURL(this).execute(url, "driving");
         }
     }
 
@@ -431,8 +611,7 @@ public class HomeNavigation extends AppCompatActivity implements OnMapReadyCallb
         builder.setTitle("Log out");
         builder.setMessage("Are you sure want to log out ?");
         builder.setPositiveButton("Yes", (dialog, which) -> {
-            editor.clear();
-            editor.commit();
+            SharedPreferencesController.clear(context);
             redirectActivity(activity, MainActivity.class);
         });
 
@@ -443,6 +622,7 @@ public class HomeNavigation extends AppCompatActivity implements OnMapReadyCallb
     public static void redirectActivity(Activity activity, Class aClass) {
         Intent intent = new Intent(activity, aClass);
 
+        activity.finish();
         intent.setFlags(intent.FLAG_ACTIVITY_NEW_TASK);
 
         activity.startActivity(intent);
@@ -454,26 +634,12 @@ public class HomeNavigation extends AppCompatActivity implements OnMapReadyCallb
         closeDrawer(drawerLayout);
     }
 
+//    @Override
+//    public void onBackPressed() {
+//    }
+
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
-    }
-
-    private class GeoHandler extends Handler{
-        @Override
-        public void handleMessage(@NonNull Message msg) {
-            Double latitude = null, longitude = null;
-            switch(msg.what){
-                case 1:
-                    Bundle bundle = msg.getData();
-                    latitude = bundle.getDouble("la");
-                    longitude = bundle.getDouble("log");
-                    break;
-                default:
-                    break;
-            }
-            LatLng latLng = new LatLng(latitude,longitude);
-            Log.d("kiemtra4", "handleMessage: "+ latLng.longitude + latLng.latitude);;
-        }
     }
 }

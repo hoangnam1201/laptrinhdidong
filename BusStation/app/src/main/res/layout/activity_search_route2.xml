@@ -3,45 +3,65 @@
     android:layout_height="match_parent"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical"
-    android:padding="16dp"
+    android:orientation="horizontal"
     android:gravity="center_horizontal"
     tools:context=".SearchRoute">
+    <androidx.drawerlayout.widget.DrawerLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".SearchRoute"
+        android:id="@+id/drawer_layout">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:orientation="vertical"
+            android:layout_height="match_parent">
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:onClick="ClickMenu"
+                android:src="@drawable/ic_action_menu"/>
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/searchAdress1"
+                android:hint="Nhập vị trí bắt đầu"
+                android:padding="16dp"
+                android:drawablePadding="16dp"
+                android:drawableLeft="@drawable/ic_location_foreground"
+                android:gravity="center_vertical"
+                />
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/searchAdress2"
+                android:hint="Nhập vị trí đến"
+                android:padding="16dp"
+                android:drawablePadding="16dp"
+                android:drawableLeft="@drawable/ic_location_foreground"
+                android:gravity="center_vertical"
+                />
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/btnTimDuong"
+                android:text="Tìm đường"
+                android:background="#0099CC"
+                android:padding="16dp"
+                android:layout_marginTop="10dp"/>
+        </LinearLayout>
+        <RelativeLayout
+            android:layout_width="300dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:background="@color/white">
 
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/searchAdress1"
-        android:hint="Nhập vị trí bắt đầu"
-        android:padding="16dp"
-        android:drawablePadding="16dp"
-        android:drawableLeft="@drawable/ic_location_foreground"
-        android:gravity="center_vertical"
-        />
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/searchAdress2"
-        android:hint="Nhập vị trí đến"
-        android:padding="16dp"
-        android:drawablePadding="16dp"
-        android:drawableLeft="@drawable/ic_location_foreground"
-        android:gravity="center_vertical"
-        />
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/btnTimDuong"
-        android:text="Tìm đường"
-        android:background="#0099CC"
-        android:padding="16dp"
-        android:layout_marginTop="10dp"/>
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Lịch sử tìm kiếm:"
-        android:textStyle="bold"
-        android:padding="16dp"
-        android:layout_marginTop="20dp"/>
+            <include
+                layout="@layout/main_nav_drawer"/>
 
+        </RelativeLayout>
+    </androidx.drawerlayout.widget.DrawerLayout>
 </LinearLayout>

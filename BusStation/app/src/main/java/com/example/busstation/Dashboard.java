@@ -12,9 +12,6 @@ import android.widget.ListView;
 import com.example.busstation.controllers.BusAdapter;
 import com.example.busstation.controllers.SharedPreferencesController;
 import com.example.busstation.models.Buses;
-import com.example.busstation.models.Buses_Favorite;
-import com.example.busstation.models.Buses_id;
-import com.example.busstation.services.BusesService;
 import com.example.busstation.services.RetrofitService;
 import com.example.busstation.services.UserService;
 
@@ -29,7 +26,7 @@ public class Dashboard extends AppCompatActivity {
 
     DrawerLayout drawerLayout;
     ListView lvFavo;
-    List<Buses_Favorite> arrayBuses;
+    List<Buses> arrayBuses;
     BusAdapter adapter;
 
     @Override
@@ -38,11 +35,12 @@ public class Dashboard extends AppCompatActivity {
         setContentView(R.layout.activity_dashboard);
         HomeNavigation.info(this.findViewById(R.id.tvNameUser),this.findViewById(R.id.tvEmail));
         drawerLayout=findViewById(R.id.drawer_layout);
+        Log.d("kiemtra", "onCreate: " + "aa");
         anhxa();
         lvFavo.setOnItemLongClickListener((adapterView, view, i, l)->{
-            SharedPreferencesController.setBooleanValue(this, "myPositionl", false);
+            SharedPreferencesController.setBooleanValue(this, "myPosition", false);
             SharedPreferencesController.setStringValue(this, "modeFollow", "buses");
-            SharedPreferencesController.setStringValue(this, "followIdItem", arrayBuses.get(i).getBuses().get_id().toString());
+            SharedPreferencesController.setStringValue(this, "followIdItem", arrayBuses.get(i).get_id().toString());
             Intent intent = new Intent(this, HomeNavigation.class);
             startActivity(intent);
             return true;
@@ -52,17 +50,21 @@ public class Dashboard extends AppCompatActivity {
     private void anhxa(){
         lvFavo = (ListView) findViewById(R.id.lvFavo);
         arrayBuses = new ArrayList<>();
-        RetrofitService.create(UserService.class).GetFavorite(SharedPreferencesController.getStringValueByKey(this,"userAuthId")).enqueue(new Callback<List<Buses_Favorite>>() {
+        RetrofitService.create(UserService.class).GetFavorite("Token " + SharedPreferencesController.getStringValueByKey(this,"accessToken")).enqueue(new Callback<List<Buses>>() {
             @Override
-            public void onResponse(Call<List<Buses_Favorite>> call, Response<List<Buses_Favorite>> response) {
-                arrayBuses = response.body();
-                adapter =new BusAdapter(getApplicationContext(),R.layout.activity_list_bus,arrayBuses);
-                lvFavo.setAdapter(adapter);
+            public void onResponse(Call<List<Buses>> call, Response<List<Buses>> response) {
+                Log.d("kiemtra", "onResponse: " + response.code());
+                if(response.isSuccessful()){
+                    arrayBuses = response.body();
+                    Log.d("kiemtra", "onResponse: " + response.body().size());
+                    adapter =new BusAdapter(getApplicationContext(),R.layout.activity_list_bus,arrayBuses,1);
+                    lvFavo.setAdapter(adapter);
+                }
             }
 
             @Override
-            public void onFailure(Call<List<Buses_Favorite>> call, Throwable t) {
-
+            public void onFailure(Call<List<Buses>> call, Throwable t) {
+                Log.d("kiemtra", "onResponse: " + t.getLocalizedMessage());
             }
         });
     }

@@ -19,7 +19,7 @@ const LoginPage = () => {
   const submitHandle = async (e) => {
     try {
       e.preventDefault();
-      console.log(userInput);
+      // console.log(userInput);
       const fetch = {
         method: "post",
         url: "https://busapbe.herokuapp.com/api/auth/login",
@@ -30,7 +30,9 @@ const LoginPage = () => {
       const { accessToken, refreshToken } = response.data;
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
+      console.log(accessToken);
       //
+      console.log(response)
       const fetch2 = {
         method: "post",
         url: "https://busapbe.herokuapp.com/api/users/get-infor",
@@ -39,13 +41,17 @@ const LoginPage = () => {
           Authorization: "Token " + localStorage.getItem("accessToken"),
         },
       };
-      const respone2 = await axios(fetch2);
-      const { username } = respone2.data;
+      const response2 = await axios(fetch2);
+      const { username } = response2.data;
+      console.log(response2)
       dispatch({ type: "CURRENT_USER", payload: { username } });
     } catch (error) {
       console.log(error);
-      setErrorMessage(error.response.data.message);
+      // setErrorMessage(error.response.data.err);
     }
+  };
+  const handleEnterKey = (e) => {
+    if (e.key === "Enter") submitHandle(e);
   };
 
   return (
@@ -69,9 +75,7 @@ const LoginPage = () => {
             ) : (
               <div className="error-message">Error: {errorMessage}</div>
             ))}
-          <form
-          // onKeyDown={handleEnterKey}
-          >
+          <form onKeyDown={handleEnterKey}>
             <TextField
               className="w-100 mt-3"
               label="Tài khoản"
@@ -94,7 +98,7 @@ const LoginPage = () => {
               variant="contained"
               color="primary"
               // onClick={handleLogin}
-              // onKeyDown={handleEnterKey}
+              onKeyDown={handleEnterKey}
               // disabled={loading}
               onClick={submitHandle}
             >

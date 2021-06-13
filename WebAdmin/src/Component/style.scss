@@ -249,8 +249,34 @@
         text-decoration: none;
         display: flex;
         list-style: none;
+        justify-content: center;
+        align-items: center;
+        margin-top: 10px;
         .user-name {
             font-weight: 500;
             margin-right: 15px;
         }
+    }
+    
+    .error-message {
+        color: #EC1C25;
+        font-weight: 600;
+    }
+    
+    .detail-form__wrapper {
+        height: 100%;
+        width: 330px;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+    
+    .detail-form__header {
+        height: 60px;
+        font-weight: 600;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        padding: 20px;
+        border-bottom: $sidebar-border;
     }

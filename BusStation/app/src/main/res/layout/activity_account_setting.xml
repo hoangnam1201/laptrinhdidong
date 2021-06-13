@@ -126,6 +126,11 @@
                         android:layout_gravity="center"
                         android:padding="16sp"/>
                 </LinearLayout>
+                <TextView
+                    android:id="@+id/tvError"
+                    android:textColor="#e74c3c"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
 
                 <RelativeLayout
                     android:layout_width="match_parent"
@@ -155,19 +160,10 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="16dp">
+        >
 
         <include
             layout="@layout/main_toolbar"/>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Account Setting"
-            android:textSize="30sp"
-            android:textStyle="bold"
-            android:gravity="center"/>
-
     </LinearLayout>
 
     <include layout="@layout/activity_loading"

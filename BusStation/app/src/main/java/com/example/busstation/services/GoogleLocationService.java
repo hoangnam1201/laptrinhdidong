@@ -14,42 +14,33 @@ import java.util.Locale;
 import java.util.function.DoubleBinaryOperator;
 //import java.util.logging.Handler;
 import android.os.Handler;
+import android.util.Log;
+
 import retrofit2.Call;
 import retrofit2.http.GET;
 
 public class GoogleLocationService {
+    public static LatLng getLocationFromAddress(Context context,String strAddress) {
 
-    public static void getAddress(String locationAddress, Context context, Handler handler){
-        Thread thread = new Thread(){
-            @Override
-            public void run() {
-                Geocoder geocoder = new Geocoder(context, Locale.getDefault());
-                Double la = 0.0;
-                Double log = 0.0;
-                try{
-                    List addressList =  geocoder.getFromLocationName(locationAddress, 1);
-                    if(addressList != null && addressList.size() >=0){
-                        Address address = (Address) addressList.get(0);
-                        StringBuilder stringBuilder = new StringBuilder();
-                        la = address.getLatitude();
-                        log = address.getLongitude();
+        Geocoder coder = new Geocoder(context);
+        List<Address> address;
+        LatLng p1 = null;
 
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }finally {
-                    Message message = Message.obtain();
-                    message.setTarget(handler);
-                    if (la != null && log != null){
-                        message.what = 1;
-                        Bundle bundle = new Bundle();
-                        bundle.putDouble("la",la);
-                        bundle.putDouble("log",log);
-                        message.setData(bundle);
-                    }
-                    message.sendToTarget();
-                }
+        try {
+            // May throw an IOException
+            address = coder.getFromLocationName(strAddress, 5);
+            if (address == null) {
+                return null;
             }
-        };
+
+            Address location = address.get(0);
+            p1 = new LatLng(location.getLatitude(), location.getLongitude() );
+
+        } catch (IOException ex) {
+
+            ex.printStackTrace();
+        }
+
+        return p1;
     }
 }

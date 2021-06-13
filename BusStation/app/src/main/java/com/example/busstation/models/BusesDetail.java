@@ -2,8 +2,7 @@ package com.example.busstation.models;
 
 import java.util.List;
 
-public class Buses {
-
+public class BusesDetail {
     String _id;
     String operatingTime;
     String timeDistance;
@@ -11,14 +10,22 @@ public class Buses {
     String name;
     int price;
     int seats;
-    List<String> busstops;
-    Boolean isFavorite;
+    List<BusStop> busstops;
 
-    public void setFavorite(Boolean favorite) {
-        isFavorite = favorite;
+    public String getName() {
+        return name;
     }
-    public Boolean getFavorite() {
-        return isFavorite;
+
+    public int getPrice() {
+        return price;
+    }
+
+    public int getSeats() {
+        return seats;
+    }
+
+    public List<BusStop> getBusstops() {
+        return busstops;
     }
 
     public String get_id() {
@@ -37,20 +44,7 @@ public class Buses {
         return id;
     }
 
-    public String getName() {
-        return name;
+    public void setName(String name) {
+        this.name = name;
     }
-
-    public int getPrice() {
-        return price;
-    }
-
-    public int getSeats() {
-        return seats;
-    }
-
-    public List<String> getBusstops() {
-        return busstops;
-    }
-
 }
