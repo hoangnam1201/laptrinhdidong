@@ -30,6 +30,7 @@ public class GoogleLocationService {
             // May throw an IOException
             address = coder.getFromLocationName(strAddress, 5);
             if (address == null) {
+                Log.d("kiemtra", "getLocationFromAddress: " + address);
                 return null;
             }
 

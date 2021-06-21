@@ -61,7 +61,7 @@ public class SignUpActivity extends AppCompatActivity {
         login.setOnClickListener(v -> openLogin());
 
         btnApply.setOnClickListener(v -> {
-            if (!Pattern.matches("[a-zA-z\\s]{3,}", edtFullName.getText().toString().trim())) {
+            if (!Pattern.matches("[a-zA-Z\\s]{3,}", edtFullName.getText().toString().trim())) {
                 tvError.setText("invalid full name");
                 return;
             }

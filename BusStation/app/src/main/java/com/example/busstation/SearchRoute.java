@@ -38,7 +38,7 @@ public class SearchRoute extends AppCompatActivity {
         drawerLayout=findViewById(R.id.drawer_layout);
         HomeNavigation.info(this.findViewById(R.id.tvNameUser),this.findViewById(R.id.tvEmail));
         getIntent();
-        Places.initialize(getApplicationContext(),getString(R.string.map_api_key));
+        Places.initialize(getApplicationContext(),getString(R.string.search_key));
         editText1.setFocusable(false);
         editText1.setOnClickListener(v -> {
             currentFocus = editText1;

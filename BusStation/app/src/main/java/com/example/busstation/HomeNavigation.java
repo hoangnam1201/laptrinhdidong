@@ -35,9 +35,11 @@ import com.example.busstation.models.BusesDetail;
 import com.example.busstation.models.BusstopDetail;
 import com.example.busstation.models.User;
 import com.example.busstation.models.Route;
+import com.example.busstation.models.myLatLng;
 import com.example.busstation.services.BusStopService;
 import com.example.busstation.services.BusesService;
 import com.example.busstation.services.GoogleLocationService;
+import com.example.busstation.services.MapService;
 import com.example.busstation.services.RetrofitService;
 import com.example.busstation.services.UserService;
 import com.example.busstation.services.directionService.FetchURL;
@@ -100,9 +102,6 @@ public class HomeNavigation extends AppCompatActivity implements OnMapReadyCallb
         anhxa();
         info(this.findViewById(R.id.tvNameUser), this.findViewById(R.id.tvEmail));
         requestPermision();
-        //test direction api
-        place1 = new LatLng(10.850858365517317, 106.77197594527688);
-        place2 = new LatLng(10.947964488200222, 106.82867741206697);
         //google map
         MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.myMap);
         mapFragment.getMapAsync(this::onMapReady);
@@ -185,7 +184,7 @@ public class HomeNavigation extends AppCompatActivity implements OnMapReadyCallb
 
         String output = "json";
 
-        String url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameter + "&key=" + getString(R.string.map_api_key);
+        String url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameter + "&key=" + getString(R.string.search_key);
         return url;
     }
 
@@ -531,10 +530,9 @@ public class HomeNavigation extends AppCompatActivity implements OnMapReadyCallb
         }
         if (mode.equals("router")) {
             String origin = SharedPreferencesController.getStringValueByKey(getApplicationContext(), "origin");
-//            String origin = "Bến tàu khách Thành phố, Bến Nghé, Quận 1, Thành phố Hồ Chí Minh";
 
             String dest = SharedPreferencesController.getStringValueByKey(getApplicationContext(), "dest");
-//            String dest = "Đan viện Cát Minh, Đường Tôn Đức Thắng, Bến Nghé, Quận 1, Thành phố Hồ Chí Minh";
+            Log.d("kiemtra", "UpLoadMarker: " + origin + " " + dest);
             if (origin == null || dest == null) {
                 Toast.makeText(getApplicationContext(), "not found origin or dest", Toast.LENGTH_SHORT).show();
                 SharedPreferencesController.setStringValue(getApplicationContext(), "modeFollow", null);
@@ -542,12 +540,46 @@ public class HomeNavigation extends AppCompatActivity implements OnMapReadyCallb
                 SharedPreferencesController.removeKey(getApplicationContext(), "origin");
                 SharedPreferencesController.removeKey(getApplicationContext(), "dest");
             }
-            place1 = GoogleLocationService.getLocationFromAddress(getApplicationContext(), origin);
-            place2 = GoogleLocationService.getLocationFromAddress(getApplicationContext(), dest);
-            uploadBusStopAround();
-            MapController.CameraUpdate(map, place1);
-            String url = getUrl(place1, place2, "driving");
-            new FetchURL(this).execute(url, "driving");
+            RetrofitService.create(MapService.class).geocoding(origin).enqueue(new Callback<myLatLng>() {
+                @Override
+                public void onResponse(Call<myLatLng> call, Response<myLatLng> response) {
+                    if(response.isSuccessful()){
+                        place1 =new LatLng(response.body().getLat(),response.body().getLon());
+                        RetrofitService.create(MapService.class).geocoding(dest).enqueue(new Callback<myLatLng>() {
+                            @Override
+                            public void onResponse(Call<myLatLng> call, Response<myLatLng> response) {
+                                if(response.isSuccessful()){
+                                    place2 =new LatLng(response.body().getLat(),response.body().getLon());
+                                    uploadBusStopAround();
+                                    MapController.CameraUpdate(map, place1);
+                                    String url = getUrl(place1, place2, "driving");
+                                    new FetchURL(context).execute(url, "driving");
+                                }
+                            }
+                            @Override
+                            public void onFailure(Call<myLatLng> call, Throwable t) {
+                                AlertDialog.Builder dlgAlert  = new AlertDialog.Builder(context);
+                                dlgAlert.setMessage("Error! An error occurred. Please try again later");
+                                dlgAlert.setTitle("ERROR");
+                                dlgAlert.setPositiveButton("OK", null);
+                                dlgAlert.setCancelable(true);
+                                dlgAlert.create().show();
+                                return;
+                            }
+                        });
+                    }
+                }
+                @Override
+                public void onFailure(Call<myLatLng> call, Throwable t) {
+                    AlertDialog.Builder dlgAlert  = new AlertDialog.Builder(context);
+                    dlgAlert.setMessage("Error! An error occurred. Please try again later");
+                    dlgAlert.setTitle("ERROR");
+                    dlgAlert.setPositiveButton("OK", null);
+                    dlgAlert.setCancelable(true);
+                    dlgAlert.create().show();
+                    return;
+                }
+            });
         }
     }
 

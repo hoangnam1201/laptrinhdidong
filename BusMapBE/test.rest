@@ -1,0 +1,39 @@
+
+###
+POST https://busapbe.herokuapp.com/api/auth/login HTTP/1.1
+Content-Type: application/json
+
+{
+    "username": "admin3",
+    "password": "123123123"
+}
+###
+POST http://localhost:3002/api/buses/add HTTP/1.1
+Content-Type: application/json
+Authorization:Token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2MGFmYWU3NTE2NTAyNjQ2NzA0OTI5ZDQiLCJpYXQiOjE2MjI1NTcyNDIsImV4cCI6MTYyMjU1NzU0Mn0.cm8onMn9lnLIRqOjpEtKxuu65LfB0R_gnjLDaSSaJe4
+
+{
+    "id":"01",
+    "operatingTime":"5:00-23:00",
+    "timeDistance":"7-13",
+    "name":"Tuyến xe buýt số 01 Bến Thành- BX Chợ Lớn",
+    "price":7000,
+    "seats":80,
+    "busstops":[
+        "60b448fd5a11b61b6809df87",
+        "60b449655a11b61b6809df88"
+        ]
+}
+
+
+
+###
+GET https://busapbe.herokuapp.com/api/busstops/search-name?name=[Q1 031] Bến Bạch Đằng HTTP/1.1
+Authorization:Token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2MGIwZTU5MzJjMjNiNjAwMjIwZDEzZWIiLCJpYXQiOjE2MjI1NTU5ODQsImV4cCI6MTYyMjU1NjI4NH0.cMxGhv-LOetNC2trq5RVTg_LQH_nTB7XD6kmEntvIao
+
+###
+GET http://localhost:3002/api/busstops/deleteNullPoint HTTP/1.1
+
+###
+GET https://busapbe.herokuapp.com/api/busstops/get-all HTTP/1.1
+Authorization:Token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2MGFmYWU3NTE2NTAyNjQ2NzA0OTI5ZDQiLCJpYXQiOjE2MjM1NzI5NTEsImV4cCI6MTYyMzY1OTM1MX0.f3xJ1nwNl2lgs3GSEao9oljNzM8XyYYj-4pPDfUCphU
